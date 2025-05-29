@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestione Incrocio Semaforico</title>
+
+  <!-- ============================= -->
+  <!-- 1) RISORSE ESTERNE           -->
+  <!-- ============================= -->
+  <!-- Google Font “Inter” per il testo -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome per le icone -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+  <!-- ============================= -->
+  <!-- 2) STILI CSS                  -->
+  <!-- ============================= -->
+  <style>
+    /* Variabili CSS globali */
+    :root {
+      --primary:   #1F2A44;
+      --secondary: #3E9F9F;
+      --accent:    #E94F37;
+      --bg-light:  #F5F7FA;
+      --bg-dark:   #FFFFFF;
+      --text-dark: #2A303C;
+      --text-light:#FFFFFF;
+      --card-shadow: rgba(0, 0, 0, 0.1);
+      --speed:     0.25s;
+      --radius:    12px;
+    }
+
+    /* Reset e impostazioni di base */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-light);
+      color: var(--text-dark);
+      line-height: 1.5;
+    }
+
+    /* ============================= */
+    /* 2.1) HEADER                   */
+    /* ============================= */
+    header {
+      background: var(--primary);
+      color: var(--text-light);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 6px var(--card-shadow);
+    }
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    /* Spazio tra icona e testo del titolo */
+    header h1 i {
+      margin-right: 1rem;
+    }
+
+    /* ============================= */
+    /* 2.2) PULSANTI CONTROLLO       */
+    /* ============================= */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+    }
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .5rem 1rem;
+      border: none;
+      border-radius: var(--radius);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--speed), transform var(--speed);
+      box-shadow: 0 2px 4px var(--card-shadow);
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+    /* Stile pulsante notte */
+    .btn-night {
+      background: var(--secondary);
+      color: var(--text-light);
+    }
+    .btn-night.active {
+      background: var(--accent);
+    }
+    /* Stile pulsanti emergenza */
+    .btn-emg {
+      background: var(--accent);
+      color: var(--text-light);
+    }
+    .btn-emg.active {
+      background: #c0392b;
+    }
+
+    /* ============================= */
+    /* 2.3) LAYOUT PRINCIPALE       */
+    /* ============================= */
+    main {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      row-gap: 2rem;
+    }
+
+    /* ============================= */
+    /* 2.4) SEZIONE STATISTICHE      */
+    /* ============================= */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .stat-box {
+      background: var(--bg-dark);
+      border-radius: var(--radius);
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 4px 8px var(--card-shadow);
+      transition: transform var(--speed);
+    }
+    .stat-box:hover {
+      transform: translateY(-4px);
+    }
+    .stat-box h3 {
+      font-size: 1.25rem;
+      margin-bottom: .75rem;
+      color: var(--primary);
+    }
+    .stat-box p {
+      font-size: .95rem;
+      margin: .25rem 0;
+    }
+
+    /* ============================= */
+    /* 2.5) SEZIONE STATI SEMAFORI   */
+    /* _____________________________ */
+    .status-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+    .status-box {
+      background: var(--bg-dark);
+      border-radius: var(--radius);
+      padding: 1rem;
+      text-align: center;
+      color: var(--text-dark);
+      box-shadow: 0 4px 8px var(--card-shadow);
+      transition: transform var(--speed);
+    }
+    .status-box:hover {
+      transform: translateY(-4px);
+    }
+    .status-box h2 {
+      font-size: 1rem;
+      margin-bottom: .5rem;
+    }
+    .light {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: grey;
+      margin: .5rem auto;
+      transition: background var(--speed);
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.2);
+    }
+    .sensor-indicator {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-top: .5rem;
+      transition: color var(--speed);
+    }
+
+    /* ============================= */
+    /* 2.6) SEZIONE GRAFICI          */
+    /* ============================= */
+    .panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .panel {
+      background: var(--bg-dark);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 4px 8px var(--card-shadow);
+      transition: transform var(--speed);
+    }
+    .panel:hover {
+      transform: translateY(-4px);
+    }
+    .panel iframe {
+      width: 100%;
+      height: 300px;
+      border: 0;
+    }
+
+    /* Responsive per schermi piccoli */
+    @media (max-width: 768px) {
+      .panels {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================= -->
+  <!-- 3) HEADER CON CONTROLLI      -->
+  <!-- ============================= -->
+  <header>
+    <h1>
+      <i class="fa-solid fa-traffic-light"></i>
+      Incrocio Semaforico
+    </h1>
+    <div class="controls">
+      <button id="btn-night" class="btn btn-night">
+        <i class="fa-solid fa-moon"></i>
+        Modalità Notte
+      </button>
+      <button data-via="Nord" class="btn btn-emg">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Emergenza Nord
+      </button>
+      <button data-via="Est" class="btn btn-emg">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Emergenza Est
+      </button>
+      <button data-via="Sud" class="btn btn-emg">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Emergenza Sud
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================= -->
+  <!-- 4) CONTENUTI PRINCIPALI       -->
+  <!-- ============================= -->
+  <main>
+    <!-- 4.1) Statistiche -->
+    <section class="stats" id="stats-container">
+      <!-- Popolato dinamicamente da JS -->
+    </section>
+
+    <!-- 4.2) Stato Semafori -->
+    <section class="status-group">
+      <div class="status-box">
+        <h2>Semaforo Nord</h2>
+        <div class="light" id="light-Nord"></div>
+      </div>
+      <div class="status-box">
+        <h2>Semaforo Est</h2>
+        <div class="light" id="light-Est"></div>
+      </div>
+      <div class="status-box">
+        <h2>Semaforo Sud</h2>
+        <div class="light" id="light-Sud"></div>
+      </div>
+    </section>
+
+    <!-- 4.3) Stato Sensori -->
+    <section class="status-group">
+      <div class="status-box">
+        <h2>Sensore Nord</h2>
+        <div class="sensor-indicator" id="sensor-Nord">NO</div>
+      </div>
+      <div class="status-box">
+        <h2>Sensore Est</h2>
+        <div class="sensor-indicator" id="sensor-Est">NO</div>
+      </div>
+      <div class="status-box">
+        <h2>Sensore Sud</h2>
+        <div class="sensor-indicator" id="sensor-Sud">NO</div>
+      </div>
+    </section>
+
+    <!-- 4.4) Grafici Grafana -->
+    <section class="panels">
+      <div class="panel">
+        <iframe id="iframe-stato"></iframe>
+      </div>
+      <div class="panel">
+        <iframe id="iframe-sensore"></iframe>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================= -->
+  <!-- 5) SCRIPT JAVASCRIPT          -->
+  <!-- ============================= -->
+  <script>
+    // 5.1) Variabili globali (passate da Flask)
+    const grafanaUrl   = "{{ grafana_url }}",
+          dashboardUid = "{{ dashboard_uid }}",
+          dashboardSlug= "{{ dashboard_slug }}",
+          panelStato   = "{{ panel_id_stato }}",
+          panelSensore = "{{ panel_id_sensore }}";
+
+    // Elenco delle direzioni
+    const dirs   = ['Nord','Est','Sud'];
+
+    // Mappa di elementi DOM per semafori e sensori
+    const lights  = Object.fromEntries(dirs.map(v=>[v, document.getElementById('light-'+v)]));
+    const sensors = Object.fromEntries(dirs.map(v=>[v, document.getElementById('sensor-'+v)]));
+    const ifSt    = document.getElementById('iframe-stato');
+    const ifSe    = document.getElementById('iframe-sensore');
+    const btnNight= document.getElementById('btn-night');
+    const btnsEmg = document.querySelectorAll('.btn-emg');
+    const statsC  = document.getElementById('stats-container');
+
+    // Stati interni
+    let nightOn=false, emgVia=null, blinkState=false, blinkHandle=null;
+
+    // 5.2) Costruzione URL Grafana embed
+    function buildIframe(id) {
+      const base = `${grafanaUrl}/d-solo/${dashboardUid}/${dashboardSlug}`;
+      const params = new URLSearchParams({
+        orgId: 1,
+        from: 'now-5m',
+        to: 'now',
+        panelId: id,
+        refresh: '1s'
+      });
+      return `${base}?${params.toString()}`;
+    }
+
+    // Inizializza gli iframe dei grafici
+    function initIframes() {
+      ifSt.src = buildIframe(panelStato);
+      ifSe.src = buildIframe(panelSensore);
+    }
+
+    // 5.3) Funzioni per lampeggio in modalità Notte
+    function startBlink() {
+      if (blinkHandle) return;
+      blinkHandle = setInterval(() => {
+        blinkState = !blinkState;
+        const col = blinkState ? '#F1C40F' : 'transparent';
+        dirs.forEach(v => lights[v].style.backgroundColor = col);
+      }, 500);
+    }
+    function stopBlink() {
+      if (blinkHandle) {
+        clearInterval(blinkHandle);
+        blinkHandle = null;
+      }
+    }
+
+    // 5.4) Aggiorna le statistiche ogni 20s
+    async function updateStats() {
+      try {
+        const res = await fetch('/stats'),
+              data= await res.json();
+        statsC.innerHTML = '';
+        dirs.forEach(v => {
+          const s = data[v] || { vehicles:0, changes:0, avg_green_ms:0 };
+          const box = document.createElement('div');
+          box.className = 'stat-box';
+          box.innerHTML = `
+            <h3>${v}</h3>
+            <p><i class="fa-solid fa-car"></i> Veicoli: ${s.vehicles}</p>
+            <p><i class="fa-solid fa-exchange-alt"></i> Cambi stati: ${s.changes}</p>
+            <p><i class="fa-solid fa-stopwatch"></i> Verde medio: ${(s.avg_green_ms/1000).toFixed(2)}s</p>
+          `;
+          statsC.appendChild(box);
+        });
+      } catch(e) {
+        console.error('Errore stats', e);
+      }
+    }
+
+    // 5.5) Aggiorna lo stato di semafori e sensori (ogni 1s)
+    async function updateStatus() {
+      // Modalità Emergenza
+      if (emgVia) {
+        stopBlink();
+        dirs.forEach(v => {
+          lights[v].style.backgroundColor = (v===emgVia ? '#27AE60' : '#E74C3C');
+          sensors[v].textContent = '–';
+          sensors[v].style.color = '#E74C3C';
+        });
+        return;
+      }
+      // Modalità Notte
+      if (nightOn) {
+        startBlink();
+        return;
+      }
+      // Funzionamento normale
+      stopBlink();
+      for (let v of dirs) {
+        // Stato semaforo
+        const r1 = await fetch(`/api/stati?via=${v}&range=-5m`),
+              d1 = await r1.json();
+        if (d1.length) {
+          const last = d1[d1.length-1].value;
+          let col = '#BDC3C7';  // default grigio
+          if (last===2) col='#27AE60';
+          if (last===1) col='#F1C40F';
+          if (last===0) col='#E74C3C';
+          lights[v].style.backgroundColor = col;
+        }
+        // Stato sensore
+        const r2 = await fetch(`/api/sensori?via=${v}&range=-5m`),
+              d2 = await r2.json();
+        if (d2.length) {
+          const on = d2[d2.length-1].value===1;
+          sensors[v].textContent = on?'SÌ':'NO';
+          sensors[v].style.color   = on?'#27AE60':'#E74C3C';
+        } else {
+          sensors[v].textContent = 'NO';
+          sensors[v].style.color = '#E74C3C';
+        }
+      }
+    }
+
+    // 5.6) Gestione pulsante “Modalità Notte”
+    btnNight.addEventListener('click', async () => {
+      nightOn = !nightOn;
+      emgVia = null;
+      btnsEmg.forEach(b => b.classList.remove('active'));
+      btnNight.classList.toggle('active', nightOn);
+      await fetch('/api/night_mode', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({mode: nightOn ? 'ON' : 'OFF'})
+      });
+      updateStatus();
+    });
+
+    // 5.7) Gestione pulsanti “Emergenza”
+    btnsEmg.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const via = btn.dataset.via;
+        const activate = (emgVia !== via);
+        if (activate && nightOn) {
+          nightOn = false;
+          btnNight.classList.remove('active');
+        }
+        // Disattiva eventuale emergenza precedente
+        if (emgVia) {
+          await fetch('/api/emergency', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({via: emgVia, mode: 'OFF'})
+          });
+        }
+        // Attiva/disattiva la nuova emergenza
+        if (activate) {
+          await fetch('/api/emergency', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({via, mode: 'ON'})
+          });
+          emgVia = via;
+        } else {
+          emgVia = null;
+        }
+        btnsEmg.forEach(b => b.classList.toggle('active', b.dataset.via===emgVia));
+        updateStatus();
+      });
+    });
+
+    // 5.8) INIZIALIZZAZIONE ALL’AVVIO DEL DOM
+    document.addEventListener('DOMContentLoaded', () => {
+      initIframes();           // Carica i grafici Grafana
+      updateStatus();          // Mostra subito stato corrente
+      setInterval(updateStatus, 1000);  // Refresh stato ogni secondo
+      updateStats();           // Mostra subito statistiche
+      setInterval(updateStats, 20000);  // Refresh statistiche ogni 20s
+    });
+  </script>
+</body>
+</html>
